@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Vocab Jump Game</title>
+<style>
+body { margin:0; overflow:hidden; font-family:sans-serif; }
+canvas { background:#87CEEB; display:block; }
+#ui {
+ position:absolute; top:10px; left:50%; transform:translateX(-50%);
+ background:white; padding:10px 20px; border-radius:10px; text-align:center;
+}
+</style>
+</head>
+<body>
+<div id="ui"></div>
+<canvas id="game"></canvas>
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let player = { x:100, y:300, w:40, h:40, dy:0, jump:false };
+let gravity = 0.8;
+let lives = 3;
+let score = 0;
+
+const vocab = [
+ {q:"통화정책", a:"chính sách tiền tệ"},
+ {q:"금융안정", a:"ổn định tài chính"},
+ {q:"변동성", a:"biến động"},
+ {q:"외환시장", a:"thị trường ngoại hối"},
+ {q:"디지털화", a:"số hóa"},
+ {q:"위상", a:"vị thế"}
+];
+
+let current;
+let platforms = [];
+
+function newQuestion(){
+ if(lives<=0){ alert("Game Over! Điểm: "+score); location.reload(); }
+ current = Math.floor(Math.random()*vocab.length);
+ generatePlatforms();
+ updateUI();
+}
+
+function generatePlatforms(){
+ platforms = [];
+ let correctIndex = Math.floor(Math.random()*4);
+ for(let i=0;i<4;i++){
+  let text = (i===correctIndex) ? vocab[current].a : vocab[Math.floor(Math.random()*vocab.length)].a;
+  platforms.push({ x:200+i*200, y:400, w:150, h:40, text:text, correct:(i===correctIndex) });
+ }
+}
+
+function updateUI(){
+ document.getElementById("ui").innerText = `Dịch: ${vocab[current].q} | ❤️ ${lives} | Điểm: ${score}`;
+}
+
+function drawPlayer(){
+ ctx.fillStyle="red";
+ ctx.fillRect(player.x, player.y, player.w, player.h);
+}
+
+function drawPlatforms(){
+ ctx.font="14px Arial";
+ platforms.forEach(p=>{
+  ctx.fillStyle="green";
+  ctx.fillRect(p.x, p.y, p.w, p.h);
+  ctx.fillStyle="black";
+  ctx.fillText(p.text, p.x+5, p.y-5);
+ });
+}
+
+function update(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ player.dy += gravity;
+ player.y += player.dy;
+
+ if(player.y > 300){ player.y=300; player.dy=0; player.jump=false; }
+
+ platforms.forEach(p=>{
+  if(player.x < p.x+p.w && player.x+player.w > p.x && player.y+player.h < p.y+10 && player.y+player.h > p.y-10){
+    if(p.correct){
+      score++;
+      player.x += 200; // nhảy sang cột tiếp
+    } else {
+      lives--;
+    }
+    newQuestion();
+  }
+ });
+
+ drawPlayer();
+ drawPlatforms();
+ requestAnimationFrame(update);
+}
+
+window.addEventListener("keydown", e=>{
+ if(e.code==="Space" && !player.jump){
+  player.dy = -15;
+  player.jump = true;
+ }
+ if(e.code==="ArrowRight") player.x += 20;
+ if(e.code==="ArrowLeft") player.x -= 20;
+});
+
+newQuestion();
+update();
+</script>
+</body>
+</html>
